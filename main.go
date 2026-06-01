@@ -64,6 +64,11 @@ func detectPackageManager() string {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "upgrade" {
+		runUpgrade()
+		return
+	}
+
 	fmt.Println(titleStyle.Render("🚀 Create Agency App"))
 	fmt.Println(infoStyle.Render("Scaffold a high-performance Next.js template tailored for your agency."))
 	fmt.Println()

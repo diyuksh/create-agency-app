@@ -2,7 +2,12 @@
 
 All notable changes to `create-agency-app` will be documented in this file.
 
-## [v1.0.3] - 2026-06-01
+## [v1.0.5] - 2026-06-02
+### Fixed
+- Fixed script path resolution errors (e.g., `Module not found "./lib/styles/scripts/setup-styles.ts"`) inside the `template/src/lib/scripts` folder caused by moving files to `src/`.
+- Prevented premature Next.js process termination (`SIGTERM`) when style scripts crash.
+
+## [v1.0.4] - 2026-06-01
 ### Fixed
 - Fixed a compilation error regarding undefined `cmd` variable after refactoring the templating engine.
 
