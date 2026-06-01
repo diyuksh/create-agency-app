@@ -239,7 +239,7 @@ func runTasks(projectName, pkgManager string, features []string, logChan chan st
 	os.WriteFile(pkgPath, outBytes, 0644)
 
 	logChan <- "📦 Installing dependencies..."
-	cmd = exec.Command(pkgManager, "install")
+	cmd := exec.Command(pkgManager, "install")
 	cmd.Dir = projectName
 	streamCmdOutput(cmd, logChan)
 
