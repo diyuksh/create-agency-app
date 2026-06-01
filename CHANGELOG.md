@@ -2,6 +2,11 @@
 
 All notable changes to `create-agency-app` will be documented in this file.
 
+## [v1.1.1] - 2026-06-02
+### Added
+- Added Playwright end-to-end visual tests to the template generation process (`npm run test:e2e`).
+- Automatically updates dependencies using the new upgrade command feature.
+
 ## [v1.1.0] - 2026-06-02
 ### Added
 - Added an `upgrade` subcommand to safely overwrite and update core CLI / infrastructure scripts in existing projects without overwriting user-modified application code.
