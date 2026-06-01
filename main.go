@@ -183,60 +183,10 @@ func runTasks(projectName, pkgManager string, features []string, logChan chan st
 	}
 
 	// Clean up unselected features
-	hasFeature := func(f string) bool {
-		for _, feature := range features {
-			if feature == f {
-				return true
-			}
-		}
-		return false
+	if err := cleanUnselectedFeatures(projectName, features); err != nil {
+		logChan <- "Error cleaning up features: " + err.Error()
+		return
 	}
-
-	pkgPath := filepath.Join(projectName, "package.json")
-	pkgBytes, _ := os.ReadFile(pkgPath)
-	var pkg map[string]interface{}
-	json.Unmarshal(pkgBytes, &pkg)
-
-	removeDep := func(dep string) {
-		if deps, ok := pkg["dependencies"].(map[string]interface{}); ok {
-			delete(deps, dep)
-		}
-		if devDeps, ok := pkg["devDependencies"].(map[string]interface{}); ok {
-			delete(devDeps, dep)
-		}
-	}
-	removeScript := func(script string) {
-		if scripts, ok := pkg["scripts"].(map[string]interface{}); ok {
-			delete(scripts, script)
-		}
-	}
-
-	if !hasFeature("marketing") {
-		os.RemoveAll(filepath.Join(projectName, "src/lib/integrations/marketing"))
-	}
-	if !hasFeature("sanity") {
-		os.RemoveAll(filepath.Join(projectName, "src/lib/integrations/sanity"))
-		removeDep("next-sanity")
-		removeDep("@sanity/client")
-		removeScript("sanity:extract")
-	}
-	if !hasFeature("shopify") {
-		os.RemoveAll(filepath.Join(projectName, "src/lib/integrations/shopify"))
-	}
-	if !hasFeature("styling") {
-		os.Remove(filepath.Join(projectName, "tailwind.config.ts"))
-		os.Remove(filepath.Join(projectName, "postcss.config.js"))
-		os.WriteFile(filepath.Join(projectName, "src/app/globals.css"), []byte(""), 0644)
-		removeDep("tailwindcss")
-		removeDep("postcss")
-		removeDep("clsx")
-		removeDep("tailwind-merge")
-		removeDep("class-variance-authority")
-		removeDep("lucide-react")
-	}
-
-	outBytes, _ := json.MarshalIndent(pkg, "", "  ")
-	os.WriteFile(pkgPath, outBytes, 0644)
 
 	logChan <- "📦 Installing dependencies..."
 	cmd := exec.Command(pkgManager, "install")
@@ -255,6 +205,68 @@ func runTasks(projectName, pkgManager string, features []string, logChan chan st
 	cmd = exec.Command("git", "commit", "-m", "Initial commit")
 	cmd.Dir = projectName
 	streamCmdOutput(cmd, logChan)
+}
+
+func cleanUnselectedFeatures(projectDir string, features []string) error {
+	hasFeature := func(f string) bool {
+		for _, feature := range features {
+			if feature == f {
+				return true
+			}
+		}
+		return false
+	}
+
+	pkgPath := filepath.Join(projectDir, "package.json")
+	pkgBytes, err := os.ReadFile(pkgPath)
+	if err != nil {
+		// If there is no package.json, we skip the json manipulation
+		return nil
+	}
+	
+	var pkg map[string]interface{}
+	json.Unmarshal(pkgBytes, &pkg)
+
+	removeDep := func(dep string) {
+		if deps, ok := pkg["dependencies"].(map[string]interface{}); ok {
+			delete(deps, dep)
+		}
+		if devDeps, ok := pkg["devDependencies"].(map[string]interface{}); ok {
+			delete(devDeps, dep)
+		}
+	}
+	removeScript := func(script string) {
+		if scripts, ok := pkg["scripts"].(map[string]interface{}); ok {
+			delete(scripts, script)
+		}
+	}
+
+	if !hasFeature("marketing") {
+		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/marketing"))
+	}
+	if !hasFeature("sanity") {
+		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/sanity"))
+		removeDep("next-sanity")
+		removeDep("@sanity/client")
+		removeScript("sanity:extract")
+	}
+	if !hasFeature("shopify") {
+		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/shopify"))
+	}
+	if !hasFeature("styling") {
+		os.Remove(filepath.Join(projectDir, "tailwind.config.ts"))
+		os.Remove(filepath.Join(projectDir, "postcss.config.js"))
+		os.WriteFile(filepath.Join(projectDir, "src/app/globals.css"), []byte(""), 0644)
+		removeDep("tailwindcss")
+		removeDep("postcss")
+		removeDep("clsx")
+		removeDep("tailwind-merge")
+		removeDep("class-variance-authority")
+		removeDep("lucide-react")
+	}
+
+	outBytes, _ := json.MarshalIndent(pkg, "", "  ")
+	return os.WriteFile(pkgPath, outBytes, 0644)
 }
 
 func streamCmdOutput(cmd *exec.Cmd, logChan chan string) {
