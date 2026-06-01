@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +18,9 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 )
+
+//go:embed all:template
+var templateFS embed.FS
 
 var (
 	subtle    = lipgloss.AdaptiveColor{Light: "#999999", Dark: "#666666"}
@@ -148,10 +153,34 @@ func main() {
 func runTasks(projectName, pkgManager string, features []string, logChan chan string) {
 	defer close(logChan)
 
-	logChan <- "🌀 Cloning base repository..."
-	cmd := exec.Command("git", "clone", "https://github.com/diyuksh/agency-nextjs-template.git", projectName)
-	streamCmdOutput(cmd, logChan)
-	os.RemoveAll(projectName + "/.git")
+	logChan <- "🌀 Unpacking base template..."
+	
+	err := fs.WalkDir(templateFS, "template", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		
+		relPath, _ := filepath.Rel("template", path)
+		if relPath == "." {
+			return os.MkdirAll(projectName, 0755)
+		}
+		
+		targetPath := filepath.Join(projectName, relPath)
+		
+		if d.IsDir() {
+			return os.MkdirAll(targetPath, 0755)
+		}
+		
+		data, err := templateFS.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(targetPath, data, 0644)
+	})
+	if err != nil {
+		logChan <- "Error unpacking: " + err.Error()
+		return
+	}
 
 	// Clean up unselected features
 	hasFeature := func(f string) bool {
