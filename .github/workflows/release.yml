@@ -6,28 +6,10 @@ on:
       - "v*.*.*"
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    strategy:
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-            ext: ""
-          - goos: linux
-            goarch: arm64
-            ext: ""
-          - goos: darwin
-            goarch: amd64
-            ext: ""
-          - goos: darwin
-            goarch: arm64
-            ext: ""
-          - goos: windows
-            goarch: amd64
-            ext: ".exe"
     steps:
       - uses: actions/checkout@v4
 
@@ -36,13 +18,18 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Build
+      - name: Build binaries
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o create-agency-app-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} main.go
+          mkdir -p build
+          GOOS=linux GOARCH=amd64 go build -o build/create-agency-app-linux-amd64 main.go
+          GOOS=linux GOARCH=arm64 go build -o build/create-agency-app-linux-arm64 main.go
+          GOOS=darwin GOARCH=amd64 go build -o build/create-agency-app-darwin-amd64 main.go
+          GOOS=darwin GOARCH=arm64 go build -o build/create-agency-app-darwin-arm64 main.go
+          GOOS=windows GOARCH=amd64 go build -o build/create-agency-app-windows-amd64.exe main.go
 
       - name: Upload binaries to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: create-agency-app-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+          files: build/create-agency-app-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
