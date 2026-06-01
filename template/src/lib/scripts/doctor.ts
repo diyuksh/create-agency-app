@@ -98,7 +98,7 @@ const checks: Check[] = [
   },
   {
     name: 'Generated styles exist',
-    check: () => existsSync(join(ROOT, 'lib/styles/css/tailwind.css')),
+    check: () => existsSync(join(ROOT, 'src/lib/styles/css/tailwind.css')),
     fix: 'Run: bun run setup:styles',
   },
   {

@@ -83,8 +83,8 @@ describe('Theatre.js Code Transforms', () => {
   const theatreBundle = INTEGRATION_BUNDLES.theatre
   if (!theatreBundle) throw new Error('Theatre bundle not found')
 
-  describe('lib/dev/index.tsx transforms', () => {
-    const file = 'lib/dev/index.tsx'
+  describe('src/lib/dev/index.tsx transforms', () => {
+    const file = 'src/lib/dev/index.tsx'
 
     it('should match Studio dynamic import', () => {
       const content = sourceFiles[file]
@@ -136,8 +136,8 @@ describe('Theatre.js Code Transforms', () => {
     })
   })
 
-  describe('lib/dev/cmdo.tsx transforms', () => {
-    const file = 'lib/dev/cmdo.tsx'
+  describe('src/lib/dev/cmdo.tsx transforms', () => {
+    const file = 'src/lib/dev/cmdo.tsx'
 
     it('should match studio toggle', () => {
       const content = sourceFiles[file]
@@ -158,8 +158,8 @@ describe('WebGL Code Transforms', () => {
   const webglBundle = INTEGRATION_BUNDLES.webgl
   if (!webglBundle) throw new Error('WebGL bundle not found')
 
-  describe('lib/features/index.tsx transforms', () => {
-    const file = 'lib/features/index.tsx'
+  describe('src/lib/features/index.tsx transforms', () => {
+    const file = 'src/lib/features/index.tsx'
 
     it('should match LazyGlobalCanvas import', () => {
       const content = sourceFiles[file]
@@ -300,8 +300,8 @@ describe('WebGL Code Transforms', () => {
     })
   })
 
-  describe('lib/dev/cmdo.tsx transforms', () => {
-    const file = 'lib/dev/cmdo.tsx'
+  describe('src/lib/dev/cmdo.tsx transforms', () => {
+    const file = 'src/lib/dev/cmdo.tsx'
 
     it('should match webgl toggle', () => {
       const content = sourceFiles[file]
@@ -379,9 +379,9 @@ describe('Combined Transforms (Multiple Integrations Removed)', () => {
   it('should work when both WebGL and Theatre are removed', async () => {
     // This simulates the "blank" preset
     const filesToTransform = [
-      'lib/dev/index.tsx',
-      'lib/dev/cmdo.tsx',
-      'lib/features/index.tsx',
+      'src/lib/dev/index.tsx',
+      'src/lib/dev/cmdo.tsx',
+      'src/lib/features/index.tsx',
       'components/layout/wrapper/index.tsx',
     ]
 

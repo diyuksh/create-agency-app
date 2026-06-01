@@ -58,7 +58,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     ],
     devDependencies: ['@sanity/vision', 'sanity'],
     folders: [
-      'lib/integrations/sanity',
+      'src/lib/integrations/sanity',
       'app/studio',
       'app/(examples)/sanity',
       'components/ui/sanity-image',
@@ -86,7 +86,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     description: 'E-commerce platform integration with cart and checkout',
     dependencies: [],
     devDependencies: [],
-    folders: ['lib/integrations/shopify', 'app/(examples)/shopify'],
+    folders: ['src/lib/integrations/shopify', 'app/(examples)/shopify'],
     files: [],
     configPatterns: ['cdn.shopify.com'],
     envVars: [
@@ -104,7 +104,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     description: 'Marketing forms and newsletter integration',
     dependencies: [],
     devDependencies: [],
-    folders: ['lib/integrations/hubspot', 'app/(examples)/hubspot'],
+    folders: ['src/lib/integrations/hubspot', 'app/(examples)/hubspot'],
     files: [],
     configPatterns: [],
     envVars: ['HUBSPOT_ACCESS_TOKEN', 'NEXT_PUBLIC_HUBSPOT_PORTAL_ID'],
@@ -117,7 +117,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     description: 'Email marketing and newsletter subscriptions',
     dependencies: [],
     devDependencies: [],
-    folders: ['lib/integrations/mailchimp'],
+    folders: ['src/lib/integrations/mailchimp'],
     files: [],
     configPatterns: [],
     envVars: [
@@ -141,7 +141,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     ],
     devDependencies: ['@types/three'],
     folders: [
-      'lib/webgl',
+      'src/lib/webgl',
       'app/(examples)/r3f',
       'components/effects/animated-gradient',
     ],
@@ -153,7 +153,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     ],
     codeTransforms: [
       {
-        file: 'lib/features/index.tsx',
+        file: 'src/lib/features/index.tsx',
         patterns: [
           // Remove the LazyGlobalCanvas import
           {
@@ -170,7 +170,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
         ],
       },
       {
-        file: 'lib/dev/cmdo.tsx',
+        file: 'src/lib/dev/cmdo.tsx',
         patterns: [
           // Remove the webgl toggle
           {
@@ -242,14 +242,14 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     description: 'Animation debugging and timeline editor',
     dependencies: [],
     devDependencies: ['@theatre/core', '@theatre/studio'],
-    folders: ['lib/dev/theatre', 'public/config'],
+    folders: ['src/lib/dev/theatre', 'public/config'],
     files: [],
     configPatterns: [],
     envVars: [],
     barrelExports: [],
     codeTransforms: [
       {
-        file: 'lib/dev/index.tsx',
+        file: 'src/lib/dev/index.tsx',
         patterns: [
           // Remove the Studio import
           {
@@ -265,7 +265,7 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
         ],
       },
       {
-        file: 'lib/dev/cmdo.tsx',
+        file: 'src/lib/dev/cmdo.tsx',
         patterns: [
           // Remove the studio toggle
           {

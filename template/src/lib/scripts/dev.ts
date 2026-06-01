@@ -20,7 +20,7 @@ const devEnv = colorEnv()
 const processes = [
   // Style watcher
   Bun.spawn(
-    [bunExecutable, '--watch', './lib/styles/scripts/setup-styles.ts'],
+    [bunExecutable, '--watch', './src/lib/styles/scripts/setup-styles.ts'],
     {
       stdout: 'inherit',
       stderr: 'inherit',
