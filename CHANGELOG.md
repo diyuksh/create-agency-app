@@ -2,6 +2,10 @@
 
 All notable changes to `create-agency-app` will be documented in this file.
 
+## [v1.1.0] - 2026-06-02
+### Added
+- Added an `upgrade` subcommand to safely overwrite and update core CLI / infrastructure scripts in existing projects without overwriting user-modified application code.
+
 ## [v1.0.5] - 2026-06-02
 ### Fixed
 - Fixed script path resolution errors (e.g., `Module not found "./lib/styles/scripts/setup-styles.ts"`) inside the `template/src/lib/scripts` folder caused by moving files to `src/`.

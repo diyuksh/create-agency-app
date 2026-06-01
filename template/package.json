@@ -29,7 +29,8 @@
 		"handoff": "bun ./src/lib/scripts/prepare-handoff.ts",
 		"sanity:extract": "cd lib/integrations/sanity && bun --env-file ../../../.env.local sanity schema extract",
 		"sanity:typegen": "cd lib/integrations/sanity && bun --env-file ../../../.env.local sanity typegen generate && bun biome check --write --unsafe",
-		"sanity:mcp": "bun ./src/lib/scripts/copy-sanity-mcp.ts"
+		"sanity:mcp": "bun ./src/lib/scripts/copy-sanity-mcp.ts",
+		"test:e2e": "playwright test"
 	},
 	"dependencies": {
 		"@sanity/client": "^7.22.1",
@@ -46,6 +47,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "latest",
+		"@playwright/test": "^1.60.0",
 		"@tailwindcss/postcss": "^4",
 		"@types/node": "^20",
 		"@types/react": "^19",
