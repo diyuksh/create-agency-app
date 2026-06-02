@@ -77,6 +77,7 @@ func main() {
 		projectName string
 		baseStack   string
 		features    []string
+		jiraKey     string
 	)
 
 	theme := huh.ThemeBase()
@@ -96,6 +97,9 @@ func main() {
 					}
 					return nil
 				}),
+			huh.NewInput().
+				Title("Jira Project Key (e.g. AGEN)").
+				Value(&jiraKey),
 		),
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -111,6 +115,8 @@ func main() {
 					huh.NewOption("Sanity CMS", "sanity"),
 					huh.NewOption("Shopify Storefront API", "shopify"),
 					huh.NewOption("Mailchimp / Klaviyo", "marketing"),
+					huh.NewOption("AI Agents Orchestration", "ai_orchestration"),
+					huh.NewOption("Vercel Analytics", "analytics"),
 				).
 				Value(&features),
 		),
@@ -126,7 +132,7 @@ func main() {
 	logChan := make(chan string)
 	
 	// Start background tasks
-	go runTasks(projectName, pkgManager, features, logChan)
+	go runTasks(projectName, pkgManager, features, jiraKey, logChan)
 
 	p := tea.NewProgram(initialModel(projectName, pkgManager, features, logChan))
 	if _, err := p.Run(); err != nil {
@@ -153,9 +159,24 @@ func main() {
 	out, _ := r.Render(markdown)
 	
 	fmt.Println(lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(accent).Padding(1, 4).Render(out))
+
+	var startDev bool
+	huh.NewConfirm().
+		Title("Should I spin up the dev server right now?").
+		Value(&startDev).
+		Run()
+
+	if startDev {
+		fmt.Println("🚀 Starting dev server...")
+		cmd := exec.Command(pkgManager, "run", "dev")
+		cmd.Dir = projectName
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Run()
+	}
 }
 
-func runTasks(projectName, pkgManager string, features []string, logChan chan string) {
+func runTasks(projectName, pkgManager string, features []string, jiraKey string, logChan chan string) {
 	defer close(logChan)
 
 	logChan <- "🌀 Unpacking base template..."
@@ -193,6 +214,48 @@ func runTasks(projectName, pkgManager string, features []string, logChan chan st
 		return
 	}
 
+	// Create config file
+	logChan <- "📝 Creating agency app config..."
+	config := map[string]interface{}{
+		"version": "1.1.1",
+		"stack": pkgManager,
+		"features": features,
+	}
+	configBytes, _ := json.MarshalIndent(config, "", "  ")
+	os.WriteFile(filepath.Join(projectName, ".agency-app-config.json"), configBytes, 0644)
+
+	// Create .env.local.example
+	logChan <- "📝 Creating environment variables template..."
+	envExample := ""
+	hasFeature := func(f string) bool {
+		for _, feature := range features {
+			if feature == f {
+				return true
+			}
+		}
+		return false
+	}
+	if hasFeature("sanity") {
+		envExample += "NEXT_PUBLIC_SANITY_PROJECT_ID=\nNEXT_PUBLIC_SANITY_DATASET=\n"
+	}
+	if hasFeature("shopify") {
+		envExample += "NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN=\nNEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN=\n"
+	}
+	if envExample != "" {
+		os.WriteFile(filepath.Join(projectName, ".env.local.example"), []byte(envExample), 0644)
+	}
+
+	logChan <- "📝 Generating dynamic README..."
+	readmeContent := fmt.Sprintf("# %s\n\nGenerated with create-agency-app.\n\n", projectName)
+	if hasFeature("sanity") {
+		readmeContent += "## Sanity CMS\nRemember to add `NEXT_PUBLIC_SANITY_PROJECT_ID` in your `.env.local`.\n\n"
+	}
+	if hasFeature("shopify") {
+		readmeContent += "## Shopify\nRemember to add `NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN` in your `.env.local`.\n\n"
+	}
+	readmeContent += "## Setup\nRun `npm install` and `npm run dev`.\n"
+	os.WriteFile(filepath.Join(projectName, "README.md"), []byte(readmeContent), 0644)
+
 	logChan <- "📦 Installing dependencies..."
 	cmd := exec.Command(pkgManager, "install")
 	cmd.Dir = projectName
@@ -203,11 +266,22 @@ func runTasks(projectName, pkgManager string, features []string, logChan chan st
 	cmd.Dir = projectName
 	streamCmdOutput(cmd, logChan)
 
+	if jiraKey != "" {
+		logChan <- "🪝 Setting up Git Hooks..."
+		hookPath := filepath.Join(projectName, ".git", "hooks", "commit-msg")
+		hookContent := fmt.Sprintf("#!/bin/sh\n# Enforce <gitmoji> %s-ID: message pattern\nif ! grep -qE \"^.* %s-[0-9]+: \" \"$1\"; then\n\techo \"Aborting commit. Your commit message must contain %s-ID.\"\n\texit 1\nfi\n", jiraKey, jiraKey, jiraKey)
+		os.WriteFile(hookPath, []byte(hookContent), 0755)
+	}
+
 	cmd = exec.Command("git", "add", ".")
 	cmd.Dir = projectName
 	streamCmdOutput(cmd, logChan)
 
-	cmd = exec.Command("git", "commit", "-m", "Initial commit")
+	commitMsg := "🎉 INIT: Scaffold new agency application"
+	if jiraKey != "" {
+		commitMsg = fmt.Sprintf("🎉 INIT: Scaffold new agency application %s-1", jiraKey)
+	}
+	cmd = exec.Command("git", "commit", "-m", commitMsg)
 	cmd.Dir = projectName
 	streamCmdOutput(cmd, logChan)
 }
@@ -248,6 +322,16 @@ func cleanUnselectedFeatures(projectDir string, features []string) error {
 
 	if !hasFeature("marketing") {
 		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/marketing"))
+	}
+	if !hasFeature("analytics") {
+		removeDep("@vercel/analytics")
+	}
+	if !hasFeature("ai_orchestration") {
+		os.RemoveAll(filepath.Join(projectDir, ".gemini"))
+		os.RemoveAll(filepath.Join(projectDir, "project-specs"))
+		os.RemoveAll(filepath.Join(projectDir, "project-tasks"))
+		os.RemoveAll(filepath.Join(projectDir, "project-docs"))
+		removeScript("orchestrate")
 	}
 	if !hasFeature("sanity") {
 		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/sanity"))
