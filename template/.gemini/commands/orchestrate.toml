@@ -1,0 +1,4 @@
+description = "Orchestrate AI agents for development"
+prompt = """
+This command triggers the agent pipeline. Follow the instructions in project-specs/project-setup.md to instantiate the frontend-developer and engineering-senior-developer agents to fulfill the project goals.
+"""

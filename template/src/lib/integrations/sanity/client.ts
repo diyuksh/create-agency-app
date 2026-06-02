@@ -24,7 +24,7 @@ export async function sanityFetch<QueryResponse>({
 	return sanityClient.fetch<QueryResponse>(query, params, {
 		next: {
 			tags,
-			revalidate: 3600, // Revalidate every hour, or on-demand via webhook
 		},
+		cache: "force-cache",
 	});
 }

@@ -19,6 +19,8 @@ export const metadata: Metadata = {
 		"High-performance framework for building exceptional digital experiences.",
 };
 
+import { Partytown } from '@builder.io/partytown/react';
+
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -29,6 +31,9 @@ export default function RootLayout({
 			lang="en"
 			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-black text-white`}
 		>
+			<head>
+				<Partytown debug={true} forward={['dataLayer.push']} />
+			</head>
 			<body className="min-h-full flex flex-col">
 				{children}
 				<DevTools />
