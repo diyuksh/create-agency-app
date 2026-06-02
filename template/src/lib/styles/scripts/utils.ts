@@ -11,7 +11,7 @@ export function scalingCalc(value: number) {
  */
 export function formatObject<Obj extends Record<string, unknown>>(
   obj: Obj,
-  mapper: (args: [key: keyof Obj, value: Obj[keyof Obj]]) => string,
+  mapper: (args: [key: string, value: any]) => string,
   joiner = '\n\t'
 ) {
   return Object.entries(obj).map(mapper).join(joiner)

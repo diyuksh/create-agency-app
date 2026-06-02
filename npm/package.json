@@ -1,0 +1,17 @@
+{
+  "name": "create-agency-app",
+  "version": "1.0.0",
+  "description": "CLI to scaffold a high-end Next.js template",
+  "bin": {
+    "create-agency-app": "bin/run.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
+  "author": "diyuksh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diyuksh/create-agency-app"
+  }
+}

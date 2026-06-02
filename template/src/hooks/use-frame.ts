@@ -7,8 +7,8 @@ type FrameCallback = (time: number, deltaTime: number) => void;
  * Avoids React state for performance, passing time directly to the callback.
  */
 export function useFrame(callback: FrameCallback, active = true) {
-	const requestRef = useRef<number>();
-	const previousTimeRef = useRef<number>();
+	const requestRef = useRef<number | undefined>(undefined);
+	const previousTimeRef = useRef<number | undefined>(undefined);
 	const callbackRef = useRef(callback);
 
 	// Keep callback fresh without re-triggering the loop

@@ -28,3 +28,5 @@ export function formatCurrency(amount: number, currency = "USD") {
 		currency,
 	}).format(amount);
 }
+
+export const isApiSupported = (api: string) => typeof window !== 'undefined' && api in window;

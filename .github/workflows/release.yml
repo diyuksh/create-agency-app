@@ -5,31 +5,29 @@ on:
     tags:
       - "v*.*.*"
 
-jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
+permissions:
+  contents: write
+  packages: write
 
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
-
-      - name: Build binaries
-        run: |
-          mkdir -p build
-          GOOS=linux GOARCH=amd64 go build -o build/create-agency-app-linux-amd64 main.go
-          GOOS=linux GOARCH=arm64 go build -o build/create-agency-app-linux-arm64 main.go
-          GOOS=darwin GOARCH=amd64 go build -o build/create-agency-app-darwin-amd64 main.go
-          GOOS=darwin GOARCH=arm64 go build -o build/create-agency-app-darwin-arm64 main.go
-          GOOS=windows GOARCH=amd64 go build -o build/create-agency-app-windows-amd64.exe main.go
-
-      - name: Upload binaries to Release
-        uses: softprops/action-gh-release@v2
+          go-version: stable
+          
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
         with:
-          files: build/create-agency-app-*
+          distribution: goreleaser
+          version: latest
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

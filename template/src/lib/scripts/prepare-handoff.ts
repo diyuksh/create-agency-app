@@ -16,7 +16,7 @@
  */
 
 import * as p from '@clack/prompts'
-import { getConfigured } from '@/integrations/registry'
+import { getConfigured } from '../integrations/registry'
 import { INTEGRATION_BUNDLES } from './integration-bundles'
 import {
   parseCliFlags,

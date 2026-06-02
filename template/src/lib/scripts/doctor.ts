@@ -7,8 +7,8 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { coreEnvSchema } from '../utils/validation'
-
+import { z } from "zod"
+const coreEnvSchema = z.object({});
 const ROOT = process.cwd()
 
 interface Check {

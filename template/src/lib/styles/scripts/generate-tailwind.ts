@@ -71,9 +71,13 @@ ${Object.entries(typography)
           return `@apply dr-text-${value};`
         }
 
+        if (typeof value === 'string') {
+          return `${key}: ${value};`
+        }
+
         return [
-          `font-size: ${scalingCalc(value.mobile)};`,
-          `@variant dt { font-size: ${scalingCalc(value.desktop)}; }`,
+          `font-size: ${scalingCalc(value!.mobile as number)};`,
+          `@variant dt { font-size: ${scalingCalc(value!.desktop as number)}; }`,
         ].join('\n\t')
       }
 
