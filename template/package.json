@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun ./src/lib/scripts/dev.ts",
-    "dev:https": "bun ./src/lib/scripts/dev.ts --https",
-    "build": "bun run setup:styles && next build",
+    "dev": "basehub dev & bun ./src/lib/scripts/dev.ts",
+    "dev:https": "basehub dev & bun ./src/lib/scripts/dev.ts --https",
+    "build": "basehub && bun run setup:styles && next build",
     "start": "next start",
     "preview": "bun run build && next start",
     "check": "biome check && tsc --noEmit && bun test",
@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@builder.io/partytown": "^0.10.0",
+    "basehub": "latest",
     "@next/third-parties": "^15.0.0",
     "@sanity/client": "^7.22.1",
     "@t3-oss/env-nextjs": "^0.13.11",

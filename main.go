@@ -113,11 +113,28 @@ func main() {
 				Options(
 					huh.NewOption("Tailwind + CVA + Shadcn/ui", "styling").Selected(true),
 					huh.NewOption("Sanity CMS", "sanity"),
+					huh.NewOption("BaseHub CMS", "basehub"),
 					huh.NewOption("Shopify Storefront API", "shopify"),
 					huh.NewOption("Mailchimp / Klaviyo", "marketing"),
 					huh.NewOption("AI Agents Orchestration", "ai_orchestration"),
 					huh.NewOption("Vercel Analytics", "analytics"),
 				).
+				Validate(func(opts []string) error {
+					hasSanity := false
+					hasBaseHub := false
+					for _, o := range opts {
+						if o == "sanity" {
+							hasSanity = true
+						}
+						if o == "basehub" {
+							hasBaseHub = true
+						}
+					}
+					if hasSanity && hasBaseHub {
+						return fmt.Errorf("choose only one CMS: Sanity or BaseHub")
+					}
+					return nil
+				}).
 				Value(&features),
 		),
 	).WithTheme(theme)
@@ -130,7 +147,7 @@ func main() {
 	pkgManager := detectPackageManager()
 
 	logChan := make(chan string)
-	
+
 	// Start background tasks
 	go runTasks(projectName, pkgManager, features, jiraKey, logChan)
 
@@ -157,7 +174,7 @@ func main() {
 
 	r, _ := glamour.NewTermRenderer(glamour.WithAutoStyle(), glamour.WithWordWrap(80))
 	out, _ := r.Render(markdown)
-	
+
 	fmt.Println(lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(accent).Padding(1, 4).Render(out))
 
 	var startDev bool
@@ -180,23 +197,23 @@ func runTasks(projectName, pkgManager string, features []string, jiraKey string,
 	defer close(logChan)
 
 	logChan <- "🌀 Unpacking base template..."
-	
+
 	err := fs.WalkDir(templateFS, "template", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		relPath, _ := filepath.Rel("template", path)
 		if relPath == "." {
 			return os.MkdirAll(projectName, 0755)
 		}
-		
+
 		targetPath := filepath.Join(projectName, relPath)
-		
+
 		if d.IsDir() {
 			return os.MkdirAll(targetPath, 0755)
 		}
-		
+
 		data, err := templateFS.ReadFile(path)
 		if err != nil {
 			return err
@@ -217,8 +234,8 @@ func runTasks(projectName, pkgManager string, features []string, jiraKey string,
 	// Create config file
 	logChan <- "📝 Creating agency app config..."
 	config := map[string]interface{}{
-		"version": "1.1.1",
-		"stack": pkgManager,
+		"version":  "1.1.1",
+		"stack":    pkgManager,
 		"features": features,
 	}
 	configBytes, _ := json.MarshalIndent(config, "", "  ")
@@ -238,6 +255,9 @@ func runTasks(projectName, pkgManager string, features []string, jiraKey string,
 	if hasFeature("sanity") {
 		envExample += "NEXT_PUBLIC_SANITY_PROJECT_ID=\nNEXT_PUBLIC_SANITY_DATASET=\n"
 	}
+	if hasFeature("basehub") {
+		envExample += "BASEHUB_TOKEN=\n"
+	}
 	if hasFeature("shopify") {
 		envExample += "NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN=\nNEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN=\n"
 	}
@@ -249,6 +269,9 @@ func runTasks(projectName, pkgManager string, features []string, jiraKey string,
 	readmeContent := fmt.Sprintf("# %s\n\nGenerated with create-agency-app.\n\n", projectName)
 	if hasFeature("sanity") {
 		readmeContent += "## Sanity CMS\nRemember to add `NEXT_PUBLIC_SANITY_PROJECT_ID` in your `.env.local`.\n\n"
+	}
+	if hasFeature("basehub") {
+		readmeContent += "## BaseHub CMS\nRemember to add `BASEHUB_TOKEN` in your `.env.local` and run the dev server to generate the SDK.\n\n"
 	}
 	if hasFeature("shopify") {
 		readmeContent += "## Shopify\nRemember to add `NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN` in your `.env.local`.\n\n"
@@ -302,7 +325,7 @@ func cleanUnselectedFeatures(projectDir string, features []string) error {
 		// If there is no package.json, we skip the json manipulation
 		return nil
 	}
-	
+
 	var pkg map[string]interface{}
 	json.Unmarshal(pkgBytes, &pkg)
 
@@ -338,6 +361,23 @@ func cleanUnselectedFeatures(projectDir string, features []string) error {
 		removeDep("next-sanity")
 		removeDep("@sanity/client")
 		removeScript("sanity:extract")
+		removeScript("sanity:typegen")
+		removeScript("sanity:mcp")
+	}
+	if !hasFeature("basehub") {
+		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/basehub"))
+		removeDep("basehub")
+		if scripts, ok := pkg["scripts"].(map[string]interface{}); ok {
+			if devScript, ok := scripts["dev"].(string); ok {
+				scripts["dev"] = strings.ReplaceAll(devScript, "basehub dev & ", "")
+			}
+			if devHttpsScript, ok := scripts["dev:https"].(string); ok {
+				scripts["dev:https"] = strings.ReplaceAll(devHttpsScript, "basehub dev & ", "")
+			}
+			if buildScript, ok := scripts["build"].(string); ok {
+				scripts["build"] = strings.ReplaceAll(buildScript, "basehub && ", "")
+			}
+		}
 	}
 	if !hasFeature("shopify") {
 		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/shopify"))
@@ -400,7 +440,7 @@ type model struct {
 	logs    []string
 	logChan chan string
 	done    bool
-	
+
 	projectName string
 	pkgManager  string
 	features    []string
@@ -472,7 +512,7 @@ func (m model) View() string {
 	if rightContent == "" {
 		rightContent = "Waiting for logs..."
 	}
-	
+
 	rightPane := paneStyle.Render(rightContent)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane) + "\n"
