@@ -21,11 +21,3 @@ archives:
   - format: binary
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
 
-brews:
-  - repository:
-      owner: diyuksh
-      name: homebrew-tap
-    description: "CLI to scaffold a high-end SAR.GA template"
-    homepage: "https://template.sar.ga"
-    test: |
-      system "#{bin}/template.sar.ga version"
