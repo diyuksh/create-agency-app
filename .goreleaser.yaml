@@ -1,5 +1,5 @@
 version: 2
-project_name: create-agency-app
+project_name: template.sar.ga
 
 before:
   hooks:
@@ -18,23 +18,14 @@ builds:
     main: ./main.go
 
 archives:
-  - format: tar.gz
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    format_overrides:
-      - goos: windows
-        format: zip
+  - format: binary
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
 
 brews:
   - repository:
       owner: diyuksh
       name: homebrew-tap
-    description: "CLI to scaffold a high-end Next.js template"
-    homepage: "https://github.com/diyuksh/create-agency-app"
+    description: "CLI to scaffold a high-end SAR.GA template"
+    homepage: "https://template.sar.ga"
     test: |
-      system "#{bin}/create-agency-app version"
+      system "#{bin}/template.sar.ga version"
