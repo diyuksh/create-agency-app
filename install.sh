@@ -29,7 +29,7 @@ if [ "$OS" != "darwin" ] && [ "$OS" != "linux" ]; then
 fi
 
 # You must replace this with the actual URL to your hosted binaries
-BINARY_URL="http://template.sar.ga/releases/latest/download/template.sar.ga-${OS}-${ARCH}"
+BINARY_URL="https://github.com/diyuksh/create-agency-app/releases/latest/download/template.sar.ga-${OS}-${ARCH}"
 
 TMP_DIR=$(mktemp -d)
 BINARY_PATH="${TMP_DIR}/template.sar.ga"
