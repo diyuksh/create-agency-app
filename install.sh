@@ -7,7 +7,7 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚀 Bootstrapping Create Agency App...${NC}"
+echo -e "${BLUE}🚀 Bootstrapping template.sar.ga...${NC}"
 
 # Detect OS
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -29,10 +29,10 @@ if [ "$OS" != "darwin" ] && [ "$OS" != "linux" ]; then
 fi
 
 # You must replace this with the actual URL to your hosted binaries
-BINARY_URL="https://github.com/diyuksh/create-agency-app/releases/latest/download/create-agency-app-${OS}-${ARCH}"
+BINARY_URL="http://template.sar.ga/releases/latest/download/template.sar.ga-${OS}-${ARCH}"
 
 TMP_DIR=$(mktemp -d)
-BINARY_PATH="${TMP_DIR}/create-agency-app"
+BINARY_PATH="${TMP_DIR}/template.sar.ga"
 
 echo -e "Downloading binary for ${OS}-${ARCH}..."
 curl -sL -o "$BINARY_PATH" "$BINARY_URL"

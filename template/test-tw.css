@@ -1,0 +1,8 @@
+
+@import "tailwindcss";
+@utility dr-m-* {
+  margin: clamp(calc(--value(number) * 1px), calc((--value(number) * 100) / var(--device-width) * 1vw), calc(--value(number) * 1.5px));
+}
+@utility -dr-m-* {
+  margin: clamp(calc(--value(number) * -1.5px), calc((--value(number) * -100) / var(--device-width) * 1vw), calc(--value(number) * -1px));
+}

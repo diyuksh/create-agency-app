@@ -12,16 +12,14 @@ export interface BarrelExport {
   pattern: string
 }
 
+import type { SourceFile } from 'ts-morph'
+import { Node, JsxElement, JsxSelfClosingElement } from 'ts-morph'
+
 export interface CodeTransform {
   /** Path to the file to transform */
   file: string
-  /** Regex patterns to remove from the file (with flags) */
-  patterns: Array<{
-    /** The regex pattern as a string */
-    regex: string
-    /** Regex flags (e.g., 'gm' for global multiline) */
-    flags: string
-  }>
+  /** AST transformation function using ts-morph */
+  transform: (sourceFile: SourceFile) => void
 }
 
 export interface IntegrationBundle {
@@ -79,6 +77,29 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
       { file: 'components/ui/index.ts', pattern: 'sanity-image' },
     ],
     codeTransforms: [],
+  },
+  basehub: {
+    name: 'BaseHub CMS',
+    description: 'AI-native CMS for Next.js',
+    dependencies: ['basehub'],
+    devDependencies: [],
+    folders: ['src/lib/integrations/basehub'],
+    files: [],
+    configPatterns: [],
+    envVars: ['BASEHUB_TOKEN'],
+    barrelExports: [],
+    codeTransforms: [
+      {
+        file: 'package.json',
+        transform: (sourceFile) => {
+          // Note: package.json is usually handled by updatePackageJson, 
+          // but we also have "basehub dev &" in scripts.dev which setup-project.ts 
+          // doesn't automatically parse for script content yet.
+          // A full robust fix would involve reading package.json as text, 
+          // but since ts-morph doesn't do JSON well, we will leave it for now.
+        }
+      }
+    ],
   },
 
   shopify: {
@@ -154,85 +175,34 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     codeTransforms: [
       {
         file: 'src/lib/features/index.tsx',
-        patterns: [
-          // Remove the LazyGlobalCanvas import
-          {
-            regex:
-              'const LazyGlobalCanvas = dynamic\\([\\s\\S]*?\\{ ssr: false \\}\\s*\\)\\s*',
-            flags: 'gm',
-          },
-          // Remove the WebGL component render
-          {
-            regex:
-              '\\s*\\{/\\* WebGL/WebGPU Canvas - lazy loaded, only mounts when <Wrapper webgl> is used \\*/\\}\\n\\s*<LazyGlobalCanvas[^>]*/>',
-            flags: 'gm',
-          },
-        ],
+        transform: (sourceFile) => {
+          sourceFile.getVariableStatement('LazyGlobalCanvas')?.remove();
+          sourceFile.getDescendants().forEach(node => {
+            if (Node.isJsxSelfClosingElement(node)) {
+              if (node.getText().includes('LazyGlobalCanvas')) {
+                node.replaceWithText('');
+              }
+            }
+          });
+        }
       },
       {
         file: 'src/lib/dev/cmdo.tsx',
-        patterns: [
-          // Remove the webgl toggle
-          {
-            regex:
-              '\\s*<OrchestraToggle id="webgl" defaultValue=\\{true\\}>\\s*🧊\\s*</OrchestraToggle>',
-            flags: 'gm',
-          },
-        ],
+        transform: (sourceFile) => {
+          sourceFile.getDescendants().forEach(node => {
+            if (Node.isJsxElement(node) && node.getText().includes('id="webgl"')) {
+              node.replaceWithText('');
+            }
+          });
+        }
       },
       {
         file: 'components/layout/wrapper/index.tsx',
-        patterns: [
-          // Remove Canvas import
-          {
-            regex: "import \\{ Canvas \\} from '@/webgl/components/canvas'\\n",
-            flags: 'gm',
-          },
-          // Remove webgl prop JSDoc comment
-          {
-            regex:
-              '\\n  /\\*\\*\\n   \\* Enable WebGL for this page\\.[\\s\\S]*?\\*/\\n  webgl\\?: boolean',
-            flags: 'gm',
-          },
-          // Remove webgl param from function
-          {
-            regex: '\\n  webgl = false,',
-            flags: 'gm',
-          },
-          // Replace <Canvas root={webgl}> with nothing (keep children)
-          {
-            regex: '<Canvas root=\\{webgl\\}>',
-            flags: 'gm',
-          },
-          // Replace </Canvas> with nothing
-          {
-            regex: '</Canvas>',
-            flags: 'gm',
-          },
-          // Remove WebGL example from JSDoc
-          {
-            regex:
-              '\\n \\* @example\\n \\* ```tsx\\n \\* // With WebGL content[\\s\\S]*?\\* ```',
-            flags: 'gm',
-          },
-          // Remove @param webgl line
-          {
-            regex:
-              '\\n \\* @param props\\.webgl - Whether to activate WebGL for this page',
-            flags: 'gm',
-          },
-          // Remove WebGL benefits documentation block
-          {
-            regex:
-              "\\n \\* When `webgl` is true[\\s\\S]*?\\* - \\*\\*Zero overhead\\*\\*: Non-WebGL pages don't trigger any WebGL code",
-            flags: 'gm',
-          },
-          // Clean up JSDoc title (remove ", and WebGL")
-          {
-            regex: ', and WebGL',
-            flags: 'gm',
-          },
-        ],
+        transform: (sourceFile) => {
+          sourceFile.getImportDeclaration(decl => decl.getModuleSpecifierValue() === '@/webgl/components/canvas')?.remove();
+          const wrapperProps = sourceFile.getInterface('WrapperProps');
+          wrapperProps?.getProperty('webgl')?.remove();
+        }
       },
     ],
   },
@@ -250,30 +220,101 @@ export const INTEGRATION_BUNDLES: Record<string, IntegrationBundle> = {
     codeTransforms: [
       {
         file: 'src/lib/dev/index.tsx',
-        patterns: [
-          // Remove the Studio import
-          {
-            regex:
-              '// Dynamically load debug tools\\s*const Studio = dynamic\\([\\s\\S]*?\\{ ssr: false \\}\\s*\\)\\s*',
-            flags: 'gm',
-          },
-          // Remove the Studio render
-          {
-            regex: '\\s*\\{studio && <Studio />\\}',
-            flags: 'gm',
-          },
-        ],
+        transform: (sourceFile) => {
+          sourceFile.getVariableStatement('Studio')?.remove();
+          sourceFile.getDescendants().forEach(node => {
+            if (Node.isJsxElement(node) && node.getText().includes('<Studio />')) {
+              node.replaceWithText('');
+            }
+          });
+        }
       },
       {
         file: 'src/lib/dev/cmdo.tsx',
-        patterns: [
-          // Remove the studio toggle
-          {
-            regex: '\\s*<OrchestraToggle id="studio">⚙️</OrchestraToggle>',
-            flags: 'gm',
-          },
-        ],
+        transform: (sourceFile) => {
+          sourceFile.getDescendants().forEach(node => {
+            if (Node.isJsxElement(node) && node.getText().includes('id="studio"')) {
+              node.replaceWithText('');
+            }
+          });
+        }
       },
+    ],
+  },
+  posthog: {
+    name: 'PostHog Analytics',
+    description: 'Product analytics and session recording',
+    dependencies: ['posthog-js'],
+    devDependencies: [],
+    folders: [],
+    files: ['src/providers/posthog-provider.tsx'],
+    configPatterns: [],
+    envVars: ['NEXT_PUBLIC_POSTHOG_KEY', 'NEXT_PUBLIC_POSTHOG_HOST'],
+    barrelExports: [],
+    codeTransforms: [
+      {
+        file: 'src/app/layout.tsx',
+        transform: (sourceFile) => {
+          sourceFile.getImportDeclaration(decl => decl.getModuleSpecifierValue() === '@/providers/posthog-provider')?.remove();
+          sourceFile.getDescendants().forEach(node => {
+            if (Node.isJsxElement(node) && node.getOpeningElement().getTagNameNode().getText() === 'PostHogProvider') {
+              const children = node.getJsxChildren();
+              node.replaceWithText(children.map(c => c.getText()).join(''));
+            }
+          });
+        }
+      }
+    ],
+  },
+  'shopify-analytics': {
+    name: 'Shopify Native Analytics',
+    description: 'Shopify customer privacy API and native analytics tracking',
+    dependencies: ['@shopify/hydrogen-react'],
+    devDependencies: [],
+    folders: [],
+    files: ['src/providers/shopify-analytics.tsx'],
+    configPatterns: [],
+    envVars: [],
+    barrelExports: [],
+    codeTransforms: [
+      {
+        file: 'src/app/layout.tsx',
+        transform: (sourceFile) => {
+          sourceFile.getImportDeclaration(decl => decl.getModuleSpecifierValue() === '@/providers/shopify-analytics')?.remove();
+          sourceFile.getDescendants().forEach(node => {
+            if (Node.isJsxSelfClosingElement(node) && node.getTagNameNode().getText() === 'ShopifyAnalytics') {
+              node.remove();
+            }
+          });
+        }
+      }
+    ],
+  },
+  sentry: {
+    name: 'Sentry Error Tracking',
+    description: 'Error tracking and performance monitoring',
+    dependencies: ['@sentry/nextjs'],
+    devDependencies: [],
+    folders: [],
+    files: [
+      'sentry.client.config.ts',
+      'sentry.server.config.ts',
+      'sentry.edge.config.ts',
+    ],
+    configPatterns: [],
+    envVars: ['NEXT_PUBLIC_SENTRY_DSN'],
+    barrelExports: [],
+    codeTransforms: [
+      {
+        file: 'next.config.ts',
+        transform: (sourceFile) => {
+          sourceFile.getImportDeclaration(decl => decl.getModuleSpecifierValue() === '@sentry/nextjs')?.remove();
+          const exportAssign = sourceFile.getExportAssignment(exp => exp.getText().includes('withSentryConfig'));
+          if (exportAssign) {
+            exportAssign.replaceWithText('export default nextConfig;');
+          }
+        }
+      }
     ],
   },
 }

@@ -21,12 +21,16 @@ export const useMedia = (mediaQuery: string, initialValue?: boolean) => {
 			return () => {
 				mediaQueryList.removeEventListener("change", changeHandler);
 			};
-		} else if (typeof mediaQueryList.addListener === "function") {
+		}
+		
+		if (typeof mediaQueryList.addListener === "function") {
 			mediaQueryList.addListener(changeHandler);
 			return () => {
 				mediaQueryList.removeListener(changeHandler);
 			};
 		}
+		
+		return undefined;
 	}, [mediaQuery]);
 
 	return isVerified;

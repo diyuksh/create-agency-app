@@ -1,12 +1,12 @@
 # Step 1: Base image
-FROM node:18-alpine AS base
+FROM oven/bun:alpine AS base
 
 # Step 2: Dependencies
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json ./
-RUN npm install
+RUN bun install
 
 # Step 3: Builder
 FROM base AS builder
@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Ensure output: 'standalone' is in next.config.ts
-RUN npm run build
+RUN bun run build
 
 # Step 4: Production Runner
 FROM base AS runner
@@ -35,4 +35,4 @@ USER nextjs
 EXPOSE 3000
 ENV PORT 3000
 
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]

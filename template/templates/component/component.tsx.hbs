@@ -1,0 +1,26 @@
+{{#if client}}
+'use client'
+
+{{/if}}
+import cn from 'clsx'
+import type { HTMLAttributes, ReactNode } from 'react'
+
+interface {{pascalCase name}}Props extends HTMLAttributes<HTMLDivElement> {
+  /** Component content */
+  children?: ReactNode
+}
+
+/**
+ * {{pascalCase name}} component.
+ */
+export function {{pascalCase name}}({
+  children,
+  className,
+  ...props
+}: {{pascalCase name}}Props) {
+  return (
+    <div className={cn(className)} {...props}>
+      {children}
+    </div>
+  )
+}

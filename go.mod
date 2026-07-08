@@ -1,4 +1,4 @@
-module github.com/your-org/create-agency-app
+module github.com/diyuksh/template.sar.ga
 
 go 1.26.2
 

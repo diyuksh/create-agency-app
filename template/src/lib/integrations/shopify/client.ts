@@ -1,8 +1,10 @@
-const domain = process.env.SHOPIFY_STORE_DOMAIN
-	? `https://${process.env.SHOPIFY_STORE_DOMAIN}`
+import { env } from "../../env";
+
+const domain = env.SHOPIFY_STORE_DOMAIN
+	? `https://${env.SHOPIFY_STORE_DOMAIN}`
 	: "";
-const endpoint = `${domain}/api/2024-01/graphql.json`;
-const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+const endpoint = `${domain}/api/2024-07/graphql.json`;
+const key = env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
 type FetchParams = {
 	cache?: RequestCache;
@@ -20,7 +22,7 @@ export interface ShopifyResponse<T> {
 export class ShopifyAPIError extends Error {
 	constructor(
 		message: string,
-		public cause?: unknown,
+		public override cause?: unknown,
 	) {
 		super(message);
 		this.name = "ShopifyAPIError";

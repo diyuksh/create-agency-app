@@ -13,5 +13,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/diyuksh/create-agency-app"
+  },
+  "dependencies": {
+    "execa": "^9.0.0",
+    "picocolors": "^1.0.0",
+    "prompts": "^2.4.2"
   }
 }

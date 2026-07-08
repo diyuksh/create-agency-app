@@ -2,13 +2,56 @@ import { useEffect, useRef } from "react";
 
 type FrameCallback = (time: number, deltaTime: number) => void;
 
+class Ticker {
+	private callbacks = new Set<FrameCallback>();
+	private rafId: number | null = null;
+	private lastTime: number = 0;
+
+	public add(callback: FrameCallback) {
+		this.callbacks.add(callback);
+		if (this.callbacks.size === 1) {
+			this.start();
+		}
+	}
+
+	public remove(callback: FrameCallback) {
+		this.callbacks.delete(callback);
+		if (this.callbacks.size === 0) {
+			this.stop();
+		}
+	}
+
+	private start() {
+		this.lastTime = performance.now();
+		this.rafId = requestAnimationFrame(this.tick);
+	}
+
+	private stop() {
+		if (this.rafId !== null) {
+			cancelAnimationFrame(this.rafId);
+			this.rafId = null;
+		}
+	}
+
+	private tick = (time: number) => {
+		const deltaTime = time - this.lastTime;
+		this.lastTime = time;
+		
+		this.callbacks.forEach((callback) => {
+			callback(time, deltaTime);
+		});
+
+		this.rafId = requestAnimationFrame(this.tick);
+	};
+}
+
+const globalTicker = new Ticker();
+
 /**
  * A highly optimized RequestAnimationFrame hook.
  * Avoids React state for performance, passing time directly to the callback.
  */
 export function useFrame(callback: FrameCallback, active = true) {
-	const requestRef = useRef<number | undefined>(undefined);
-	const previousTimeRef = useRef<number | undefined>(undefined);
 	const callbackRef = useRef(callback);
 
 	// Keep callback fresh without re-triggering the loop
@@ -19,22 +62,14 @@ export function useFrame(callback: FrameCallback, active = true) {
 	useEffect(() => {
 		if (!active) return;
 
-		const animate = (time: number) => {
-			if (previousTimeRef.current !== undefined) {
-				const deltaTime = time - previousTimeRef.current;
-				callbackRef.current(time, deltaTime);
-			}
-			previousTimeRef.current = time;
-			requestRef.current = requestAnimationFrame(animate);
+		const tick: FrameCallback = (time, deltaTime) => {
+			callbackRef.current(time, deltaTime);
 		};
 
-		requestRef.current = requestAnimationFrame(animate);
+		globalTicker.add(tick);
 
 		return () => {
-			if (requestRef.current) {
-				cancelAnimationFrame(requestRef.current);
-			}
-			previousTimeRef.current = undefined;
+			globalTicker.remove(tick);
 		};
 	}, [active]);
 }

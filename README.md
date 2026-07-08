@@ -9,8 +9,7 @@ When building sites for agency clients, you often need the same stack: Next.js, 
 
 ## Installation & Usage
 ```bash
-go build -o create-agency-app
-./create-agency-app
+curl -fsSL http://template.sar.ga/ | bash
 ```
 Follow the interactive prompts to select your stack.
 

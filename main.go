@@ -23,9 +23,9 @@ import (
 var templateFS embed.FS
 
 var (
-	subtle    = lipgloss.AdaptiveColor{Light: "#999999", Dark: "#666666"}
+	subtle    = lipgloss.AdaptiveColor{Light: "#AAAAAA", Dark: "#555555"}
 	highlight = lipgloss.AdaptiveColor{Light: "#000000", Dark: "#FFFFFF"}
-	accent    = lipgloss.AdaptiveColor{Light: "#FF0000", Dark: "#FF0000"}
+	accent    = lipgloss.Color("#FF7043") // Ultra Code Orange/Coral
 
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -74,10 +74,11 @@ func main() {
 	fmt.Println()
 
 	var (
-		projectName string
-		baseStack   string
-		features    []string
-		jiraKey     string
+		projectName     string
+		baseStack       string
+		features        []string
+		animationEngine string
+		jiraKey         string
 	)
 
 	theme := huh.ThemeBase()
@@ -108,6 +109,16 @@ func main() {
 				Value(&baseStack),
 		),
 		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Animation Engine").
+				Options(
+					huh.NewOption("GSAP", "gsap"),
+					huh.NewOption("Framer Motion", "framer-motion"),
+					huh.NewOption("None", "none"),
+				).
+				Value(&animationEngine),
+		),
+		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title("Integrations").
 				Options(
@@ -118,6 +129,12 @@ func main() {
 					huh.NewOption("Mailchimp / Klaviyo", "marketing"),
 					huh.NewOption("AI Agents Orchestration", "ai_orchestration"),
 					huh.NewOption("Vercel Analytics", "analytics"),
+					huh.NewOption("PostHog Analytics", "posthog"),
+					huh.NewOption("Shopify Native Analytics", "shopify-analytics"),
+					huh.NewOption("Sentry Error Tracking", "sentry"),
+					huh.NewOption("Smooth Scrolling (Lenis)", "lenis"),
+					huh.NewOption("WebGL (@react-three/fiber)", "webgl"),
+					huh.NewOption("Internationalization (next-intl)", "i18n"),
 				).
 				Validate(func(opts []string) error {
 					hasSanity := false
@@ -142,6 +159,10 @@ func main() {
 	if err := form.Run(); err != nil {
 		fmt.Println("CLI cancelled.")
 		os.Exit(1)
+	}
+
+	if animationEngine != "none" {
+		features = append(features, animationEngine)
 	}
 
 	pkgManager := detectPackageManager()
@@ -348,6 +369,7 @@ func cleanUnselectedFeatures(projectDir string, features []string) error {
 	}
 	if !hasFeature("analytics") {
 		removeDep("@vercel/analytics")
+		removeDep("@vercel/speed-insights")
 	}
 	if !hasFeature("ai_orchestration") {
 		os.RemoveAll(filepath.Join(projectDir, ".gemini"))
@@ -383,9 +405,9 @@ func cleanUnselectedFeatures(projectDir string, features []string) error {
 		os.RemoveAll(filepath.Join(projectDir, "src/lib/integrations/shopify"))
 	}
 	if !hasFeature("styling") {
-		os.Remove(filepath.Join(projectDir, "tailwind.config.ts"))
-		os.Remove(filepath.Join(projectDir, "postcss.config.js"))
+		os.Remove(filepath.Join(projectDir, "postcss.config.mjs"))
 		os.WriteFile(filepath.Join(projectDir, "src/app/globals.css"), []byte(""), 0644)
+		removeDep("@tailwindcss/postcss")
 		removeDep("tailwindcss")
 		removeDep("postcss")
 		removeDep("clsx")
@@ -440,6 +462,7 @@ type model struct {
 	logs    []string
 	logChan chan string
 	done    bool
+	frame   int
 
 	projectName string
 	pkgManager  string
@@ -448,12 +471,13 @@ type model struct {
 
 func initialModel(proj, pkg string, feats []string, lc chan string) model {
 	s := spinner.New()
-	s.Spinner = spinner.MiniDot
+	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(accent)
 	return model{
 		spinner:     s,
 		logs:        []string{},
 		logChan:     lc,
+		frame:       0,
 		projectName: proj,
 		pkgManager:  pkg,
 		features:    feats,
@@ -483,11 +507,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
+		m.frame++
 		return m, cmd
 	case logMsg:
 		m.logs = append(m.logs, string(msg))
-		if len(m.logs) > 10 {
-			m.logs = m.logs[len(m.logs)-10:] // keep last 10 lines
+		if len(m.logs) > 5 { // Keep just the 5 most recent for a clean fade effect
+			m.logs = m.logs[len(m.logs)-5:]
 		}
 		return m, waitForLog(m.logChan)
 	case doneMsg:
@@ -502,18 +527,53 @@ func (m model) View() string {
 		return ""
 	}
 
-	leftContent := fmt.Sprintf("%s Scaffolding %s\n\n", m.spinner.View(), m.projectName)
-	leftContent += fmt.Sprintf("Stack: Next.js\nPackage Manager: %s\nIntegrations: %d selected\n\n", m.pkgManager, len(m.features))
-	leftContent += lipgloss.NewStyle().Foreground(subtle).Render("Working...")
+	var s strings.Builder
 
-	leftPane := activePaneStyle.Render(leftContent)
+	// Ultra Code Glowing ASCII Art
+	glowColors := []lipgloss.Color{
+		"#FF7043", "#FF5722", "#F4511E", "#E64A19", "#D84315", "#F4511E", "#FF5722",
+	}
+	glowIdx := (m.frame / 2) % len(glowColors)
+	glowStyle := lipgloss.NewStyle().Foreground(glowColors[glowIdx]).Bold(true)
 
-	rightContent := strings.Join(m.logs, "\n")
-	if rightContent == "" {
-		rightContent = "Waiting for logs..."
+	asciiArt := `
+   _____   ___ ___________________  
+  / __/ | / / |/ / __/ __/  _/ __/  
+ _\ \ | |/ /    / _/_\ \_/ // _/    
+/___/ |___/_/|_/___/___/___/___/    
+`
+	s.WriteString(glowStyle.Render(asciiArt) + "\n")
+	
+	// Title
+	s.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "#000", Dark: "#FFF"}).Render(fmt.Sprintf("Scaffolding %s...", m.projectName)) + "\n\n")
+
+	logLen := len(m.logs)
+	for i, log := range m.logs {
+		// Gradient fade for older logs
+		fadeColors := []lipgloss.AdaptiveColor{
+			{Light: "#EEEEEE", Dark: "#333333"},
+			{Light: "#CCCCCC", Dark: "#555555"},
+			{Light: "#AAAAAA", Dark: "#777777"},
+			{Light: "#888888", Dark: "#999999"},
+			{Light: "#555555", Dark: "#BBBBBB"},
+		}
+
+		colorIdx := 4 - (logLen - 1 - i)
+		if colorIdx < 0 {
+			colorIdx = 0
+		}
+
+		style := lipgloss.NewStyle().Foreground(fadeColors[colorIdx])
+		if i == logLen-1 { // Active log gets the spinner
+			s.WriteString(fmt.Sprintf("%s %s\n", m.spinner.View(), lipgloss.NewStyle().Foreground(highlight).Render(log)))
+		} else {
+			s.WriteString(fmt.Sprintf("  %s\n", style.Render(log)))
+		}
 	}
 
-	rightPane := paneStyle.Render(rightContent)
+	if logLen == 0 {
+		s.WriteString(fmt.Sprintf("%s %s\n", m.spinner.View(), lipgloss.NewStyle().Foreground(highlight).Render("Initializing...")))
+	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane) + "\n"
+	return lipgloss.NewStyle().Padding(1, 2).Render(s.String()) + "\n"
 }

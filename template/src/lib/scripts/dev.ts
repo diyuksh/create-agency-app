@@ -18,16 +18,6 @@ if (isInspect) nextDevArgs.push('--inspect')
 const devEnv = colorEnv()
 
 const processes = [
-  // Style watcher
-  Bun.spawn(
-    [bunExecutable, '--watch', './src/lib/styles/scripts/setup-styles.ts'],
-    {
-      stdout: 'inherit',
-      stderr: 'inherit',
-      env: devEnv,
-    }
-  ),
-
   // Next.js dev server
   Bun.spawn(nextDevArgs, {
     stdout: 'inherit',

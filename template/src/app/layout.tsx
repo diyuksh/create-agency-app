@@ -1,25 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { DevTools } from "@/components/dev-tools";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
-});
+import { PostHogProvider } from "@/providers/posthog-provider";
+import { ShopifyAnalytics } from "@/providers/shopify-analytics";
 
 export const metadata: Metadata = {
+	metadataBase: new URL(
+		process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+	),
 	title: "Agency Next.js Template",
 	description:
 		"High-performance framework for building exceptional digital experiences.",
 };
-
-import { Partytown } from '@builder.io/partytown/react';
 
 export default function RootLayout({
 	children,
@@ -29,14 +25,17 @@ export default function RootLayout({
 	return (
 		<html
 			lang="en"
-			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-black text-white`}
+			className="h-full antialiased bg-black text-white font-sans"
 		>
-			<head>
-				<Partytown debug={true} forward={['dataLayer.push']} />
-			</head>
 			<body className="min-h-full flex flex-col">
+				<PostHogProvider>
+					<ShopifyAnalytics />
 				{children}
+				<GoogleAnalytics gaId="G-XYZ" />
 				<DevTools />
+				<Analytics />
+				<SpeedInsights />
+				</PostHogProvider>
 			</body>
 		</html>
 	);

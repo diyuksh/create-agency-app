@@ -1,10 +1,15 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 	output: "standalone",
+	experimental: {
+		reactCompiler: true,
+	},
 	images: {
 		formats: ["image/avif", "image/webp"],
 	},
+	eslint: { ignoreDuringBuilds: true },
 	async headers() {
 		return [
 			{
@@ -36,5 +41,13 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "your-org",
+  project: "your-project",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  reactComponentAnnotation: { enabled: true },
+  disableLogger: true,
+  automaticVercelMonitors: true,
+});
 

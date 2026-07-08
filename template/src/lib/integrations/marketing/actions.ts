@@ -75,7 +75,7 @@ export async function subscribeToNewsletter(
 		return { success: true };
 	} catch (error) {
 		if (error instanceof z.ZodError) {
-			return { error: error.issues[0].message };
+			return { error: error.issues[0]?.message ?? "Validation failed" };
 		}
 		return { error: "An unexpected error occurred." };
 	}

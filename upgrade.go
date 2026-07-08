@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func mergePackageJSON() error {
@@ -73,7 +74,7 @@ func runUpgrade() {
 	fmt.Println(titleStyle.Render("🔄 Upgrading Agency App Template"))
 	
 	if _, err := os.Stat("package.json"); os.IsNotExist(err) {
-		fmt.Println(accent.Dark, "Error: package.json not found. Run this command in the root of your project.")
+		fmt.Println(lipgloss.NewStyle().Foreground(accent).Render("Error: package.json not found. Run this command in the root of your project."))
 		os.Exit(1)
 	}
 

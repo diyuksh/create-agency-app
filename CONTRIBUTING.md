@@ -6,6 +6,8 @@ This project consists of two main parts:
 1. **The CLI**: Written in Go using Bubble Tea.
 2. **The Template**: A Next.js App Router project located in the `template/` directory.
 
+> **Important:** This project strictly uses **Bun** as its package manager and runtime. Do not use npm, pnpm, or yarn.
+
 ## Modifying the Next.js Template
 You don't need to know Go to contribute to the template!
 1. Navigate to the template folder:
@@ -14,11 +16,11 @@ You don't need to know Go to contribute to the template!
    ```
 2. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 3. Run the development server to test your changes:
    ```bash
-   npm run dev
+   bun run dev
    ```
 4. Once you are happy with your changes, commit them. The Go CLI will automatically bundle the updated `template/` directory using `go:embed` the next time you build the CLI.
 

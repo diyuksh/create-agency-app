@@ -11,13 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-    - run: npm install
-    - run: npm run build
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+    - run: bun install
+    - run: bun run build
     - name: Run Lighthouse CI
       run: |
-        npm install -g @lhci/cli
-        lhci autorun
+        bunx @unlighthouse/cli --site http://localhost:3000

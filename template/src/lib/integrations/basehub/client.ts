@@ -1,12 +1,31 @@
-import { basehub } from "basehub"
+export async function basehubFetch<T>({
+	query,
+	variables = {},
+	tags = [],
+}: {
+	query: string;
+	variables?: Record<string, unknown>;
+	tags?: string[];
+}): Promise<T> {
+	const token = process.env.BASEHUB_TOKEN || "";
+	const url = process.env.BASEHUB_URL || "https://api.basehub.com/graphql";
 
-// This is an example of querying BaseHub.
-// The SDK is generated locally when you run the dev server.
-export async function getSiteMetadata() {
-  const data = await basehub().query({
-    _sys: {
-      id: true,
-    },
-  })
-  return data
+	const response = await fetch(url, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"x-basehub-token": token,
+		},
+		body: JSON.stringify({ query, variables }),
+		next: { tags },
+		cache: "force-cache",
+	});
+
+	const json = await response.json();
+
+	if (json.errors) {
+		throw new Error(`Failed to fetch from BaseHub: ${JSON.stringify(json.errors)}`);
+	}
+
+	return json.data;
 }

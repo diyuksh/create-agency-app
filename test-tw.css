@@ -1,0 +1,9 @@
+
+@import "tailwindcss";
+
+@utility dr-p-* {
+  padding: calc(var(--value(number)) * 1px);
+}
+@utility -dr-m-* {
+  margin: calc(var(--value(number)) * -1px);
+}

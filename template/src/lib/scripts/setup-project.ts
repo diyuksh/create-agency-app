@@ -81,6 +81,7 @@ interface SetupOptions {
   dryRun: boolean
   keepIntegrations: string[]
 }
+import { Project } from 'ts-morph'
 
 /**
  * Apply code transformations to a file
@@ -90,30 +91,22 @@ const applyCodeTransforms = async (
   dryRun: boolean
 ): Promise<number> => {
   let totalChanges = 0
+  const project = new Project()
 
   for (const transform of transforms) {
     try {
       const fullPath = resolvePath(transform.file)
-      const file = Bun.file(fullPath)
+      if (!(await pathExists(fullPath))) continue
 
-      if (!(await file.exists())) continue
+      const sourceFile = project.addSourceFileAtPath(fullPath)
+      const initialText = sourceFile.getFullText()
 
-      let content = await file.text()
-      let fileChanged = false
+      transform.transform(sourceFile)
 
-      for (const { regex, flags } of transform.patterns) {
-        const pattern = new RegExp(regex, flags)
-        const newContent = content.replace(pattern, '')
-
-        if (newContent !== content) {
-          content = newContent
-          fileChanged = true
-        }
-      }
-
-      if (fileChanged) {
+      const newText = sourceFile.getFullText()
+      if (initialText !== newText) {
         if (!dryRun) {
-          await Bun.write(fullPath, content)
+          await sourceFile.save()
         }
         totalChanges++
       }
